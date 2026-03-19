@@ -1,38 +1,55 @@
-const Tipo = require('../model/Tipo.js');
-const { request, response } = require('express');
+const Tipo = require('../models/Tipo.js');
 
-const getTipo = async ( req = request, res = response) => {
-        try {
+const getTipos = async (req, res) => {
+    try {
         const tipos = await Tipo.find();
         res.status(200).json(tipos);
-    }catch (error) {
-        console.error('×  Error al obtener tipos: ', error);
-        res.status(500),json({ msg: 'Error al listar los tipos'});
+    } catch (error) {
+        res.status(500).json({ message: 'Error procesando los datos para la entidad tipo', errorDetails: error });
     }
 }
 
-const createTipo = async (req = request, res = response) => {
+const getTipoById = async (req, res) => {
     try {
-        const {nombre, FechaCreacion, fechActualizacion, descripcion} = req.body;
+        const tipo = await Tipo.findById(req.params.id);
+        if (!tipo) return res.status(404).json({ msg: 'No encontrada' });
+        res.status(200).json(tipo);
+    } catch (error) {
+        res.status(500).json({ message: 'Error procesando los datos para la entidad tipo', errorDetails: error });
+    }
+}
 
-        const tipoDB = await Tipo.findOne({ nombre });
-        if (tipoDB) {
-            return res.status(400).json({ msg: 'El tipo "${nombre}" ya existe'});
+const createTipo = async (req, res) => {
+    try {
+        const existingTipo = await Tipo.findOne({ nombre: req.body.nombre }); 
+        if (existingTipo) return res.status(400).json({ msg: 'Ya existe' });
 
-        }
-
-        const tipo = new Tipo({ nombre, FechaCreacion, fechActualizacion, descripcion });
-
-        await tipo.save();
+        const tipo = new Tipo(req.body);
+        await entity.save();
         res.status(201).json(tipo);
     } catch (error) {
-
-        console.error(' ✕ error al crear el tipo: ', error);
-        res.status(500),json({ msg: 'Error al crear el tipo'});
+        res.status(500).json({ message: 'Error procesando los datos para la entidad tipo', errorDetails: error });
     }
 }
 
-module.exports = {
-    getTipos,
-    createTipo
+const updateTipo = async (req, res) => {
+    try {
+        const tipo = await Tipo.findByIdAndUpdate(req.params.id, req.body, { new: true });
+        if (!tipo) return res.status(404).json({ msg: 'No encontrada' });
+        res.status(200).json(tipo);
+    } catch (error) {
+        res.status(500).json({ message: 'Error procesando los datos para la entidad tipo', errorDetails: error });
+    }
 }
+
+const deleteTipo = async (req, res) => {
+    try {
+        const tipo = await Tipo.findByIdAndDelete(req.params.id);
+        if (!tipo) return res.status(404).json({ msg: 'No encontrada' });
+        res.status(200).json({ msg: 'Eliminada correctamente' });
+    } catch (error) {
+        res.status(500).json({ message: 'Error procesando los datos para la entidad tipo', errorDetails: error });
+    }
+}
+
+module.exports = { getTipos, getTipoById, createTipo, updateTipo, deleteTipo };

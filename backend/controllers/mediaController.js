@@ -1,46 +1,55 @@
-const Media = require('../models/Media');
-const { Router } = require('express');
-const router = Router();
+const Media = require('../models/Media.js');
 
-// 1. Consultar todas las producciones (GET)
-router.get('/', async function(req, res) {
+const getMedia = async (req, res) => {
     try {
-        const producciones = await Media.find().populate([
-            { path: 'genero', select: 'nombre estado' },
-            { path: 'director', select: 'nombres estado' },
-            { path: 'productora', select: 'nombre estado' },
-            { path: 'tipo', select: 'nombre' }
-        ]);
-        res.send(producciones);
+        const medias = await Media.find().populate('genero director productora tipo');
+        res.status(200).json(medias);
     } catch (error) {
-        console.log(error);
-        res.status(500).send('Ocurrió un error al consultar producciones');
+        res.status(500).json({ msg: 'Error al obtener producciones', error });
     }
-});
+}
 
-// 2. Crear nueva película o serie (POST) 
-router.post('/', async function(req, res) {
+const getMediaById = async (req, res) => {
     try {
-        let media = new Media();
-        media.serial = req.body.serial;
-        media.titulo = req.body.titulo;
-        media.sinopsis = req.body.sinopsis;
-        media.url = req.body.url;
-        media.foto = req.body.foto;
-        media.añoEstreno = req.body.añoEstreno;
-        
-        // Asignación de llaves foráneas//
-        media.genero = req.body.genero._id;
-        media.director = req.body.director._id;
-        media.productora = req.body.productora._id;
-        media.tipo = req.body.tipo._id;
-
-        media = await media.save();
-        res.send(media);
+        const media = await Media.findById(req.params.id).populate('genero director productora tipo');
+        if (!media) return res.status(404).json({ msg: 'Producción no encontrada' });
+        res.status(200).json(media);
     } catch (error) {
-        console.log(error);
-        res.status(400).send('Error al registrar la producción');
+        res.status(500).json({ msg: 'Error al obtener producción', error });
     }
-});
+}
 
-module.exports = router;
+const createMedia = async (req, res) => {
+    try {
+        const existingMedia = await Media.findOne({ serial: req.body.serial }); 
+        if (existingMedia) return res.status(400).json({ msg: 'El serial ya existe' });
+
+        const media = new Media(req.body);
+        await media.save();
+        res.status(201).json(media);
+    } catch (error) {
+        res.status(500).json({ msg: 'Error al registrar producción', error });
+    }
+}
+
+const updateMedia = async (req, res) => {
+    try {
+        const media = await Media.findByIdAndUpdate(req.params.id, req.body, { new: true }).populate('genero director productora tipo');
+        if (!media) return res.status(404).json({ msg: 'Producción no encontrada' });
+        res.status(200).json(media);
+    } catch (error) {
+        res.status(500).json({ msg: 'Error al actualizar producción', error });
+    }
+}
+
+const deleteMedia = async (req, res) => {
+    try {
+        const media = await Media.findByIdAndDelete(req.params.id);
+        if (!media) return res.status(404).json({ msg: 'Producción no encontrada' });
+        res.status(200).json({ msg: 'Producción eliminada correctamente' });
+    } catch (error) {
+        res.status(500).json({ msg: 'Error al eliminar producción', error });
+    }
+}
+
+module.exports = { getMedia, getMediaById, createMedia, updateMedia, deleteMedia };

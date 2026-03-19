@@ -1,33 +1,10 @@
-const { Schema, model} = require('mongoose');
+const { Schema, model } = require('mongoose');
 
-const DirectorSchema = new mongoose.Schema({
-    nombre: {
-        type: String,
-        required: [true, 'El campo "nombre" es obligatorio'],
-        unique: true,
-        trim: true
-    },
-    estado: {
-        type: String,
-        required: true,
-        enum: ['Activo', 'No activo'],
-        default: 'Activo'
-
-    },
-    FechaCreacion: {
-        type: Date,
-        required: true,
-        timestamps: true
-    },
-
-    FechActualizacion: {
-        type: Date,
-        timestamps: true
-    },
-
-    
-
-
+const DirectorSchema = new Schema({
+    nombre: { type: String, required: [true, 'El campo "nombre" es obligatorio'], unique: true, trim: true },
+    isActive: { type: Boolean, default: true }
+}, {
+    timestamps: { createdAt: 'fechaCreacion', updatedAt: 'fechaActualizacion' }
 });
 
 module.exports = model('Director', DirectorSchema);
